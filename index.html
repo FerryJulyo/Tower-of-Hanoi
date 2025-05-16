@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tower of Hanoi Puzzle</title>
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none;
+  }
+  h1 {
+    margin: 1rem 0 0.25rem 0;
+    font-weight: 700;
+    font-size: 2.5rem;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px rgba(52,152,219,0.7);
+  }
+  h2 {
+    margin: 0.5rem 0 1rem 0;
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #d6eaf8;
+  }
+
+  #container {
+    width: 100%;
+    max-width: 960px;
+    padding: 1rem;
+  }
+
+  /* Difficulty selection */
+  #difficulty-select {
+    background: rgba(44, 62, 80, 0.9);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin: 1rem auto 2rem auto;
+    max-width: 400px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    text-align: center;
+  }
+  #difficulty-select button {
+    background: #2980b9;
+    border: none;
+    padding: 0.75rem 2rem;
+    margin: 0.75rem 1rem;
+    font-size: 1.15rem;
+    color: #ecf0f1;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s ease;
+    box-shadow: 0 4px 10px rgba(41,128,185,0.6);
+  }
+  #difficulty-select button:hover, #difficulty-select button:focus {
+    background: #3498db;
+    outline: none;
+    box-shadow: 0 6px 16px rgba(52,152,219,0.85);
+  }
+  #difficulty-select p {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: #aee1ff;
+  }
+
+  /* Leaderboard */
+  #leaderboard-container {
+    background: rgba(44, 62, 80, 0.9);
+    border-radius: 12px;
+    margin: 1rem auto 2rem auto;
+    max-width: 600px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  }
+  #leaderboard-container h3 {
+    margin: 0 0 0.75rem 0;
+    font-weight: 700;
+    color: #55acee;
+    text-align: center;
+    letter-spacing: 1.3px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #e9f6ff;
+  }
+  thead tr {
+    border-bottom: 2px solid #55acee;
+  }
+  th, td {
+    padding: 0.5rem 0.8rem;
+    text-align: center;
+  }
+  tbody tr:hover {
+    background: rgba(41, 128, 185, 0.3);
+  }
+  tbody tr:nth-child(odd) {
+    background: rgba(41, 128, 185, 0.15);
+  }
+
+  /* Game area */
+  #game-area {
+    display: none;
+    margin-top: 1rem;
+    perspective: 1200px;
+  }
+  #game-info {
+    display: flex;
+    justify-content: space-between;
+    max-width: 960px;
+    margin: 0 auto 0.5rem auto;
+    font-weight: 600;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+  }
+  #game-info span {
+    user-select: none;
+  }
+  #pegs {
+    max-width: 960px;
+    margin: 0 auto 3rem auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 320px;
+    gap: 2rem;
+    user-select: none;
+  }
+  .peg {
+    background: #1a252f;
+    box-shadow: inset 0 0 12px #2980b9;
+    width: 140px;
+    height: 290px;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    padding-bottom: 8px;
+    position: relative;
+  }
+  .peg::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 100%;
+    background: #2c3e50;
+    border-radius: 6px;
+    box-shadow: 0 0 10px #3498db;
+  }
+  .peg-label {
+    position: absolute;
+    bottom: -28px;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    color: #89c4f4;
+    user-select: none;
+  }
+
+  /* Disks */
+  .disk {
+    height: 30px;
+    border-radius: 14px;
+    margin: 4px 0;
+    box-shadow: 0 3px 7px rgba(0,0,0,0.4);
+    cursor: grab;
+    transition: box-shadow 0.2s ease;
+    text-align: center;
+    line-height: 30px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #f0f0f0;
+    user-select:none;
+  }
+  .disk:active {
+    cursor: grabbing;
+  }
+  .disk.dragging {
+    opacity: 0.7;
+    box-shadow: 0 0 16px 4px #3498dbaa;
+    cursor: grabbing;
+  }
+
+  /* Disk colors by size */
+  /* We'll generate shades dynamically in JS to match disk sizes */
+
+  /* Button and controls */
+  #controls {
+    margin: 1rem auto 3rem auto;
+    max-width: 400px;
+    text-align: center;
+  }
+  #controls button {
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    border: none;
+    padding: 0.6rem 1.4rem;
+    background: #2980b9;
+    color: #e0f0ff;
+    box-shadow: 0 6px 14px rgb(41 128 185 / 0.6);
+    transition: background 0.3s ease;
+  }
+  #controls button:hover,
+  #controls button:focus {
+    background: #5499c7;
+    outline: none;
+    box-shadow: 0 8px 20px rgb(52 152 219 / 0.8);
+  }
+
+  /* Modal Input for Name */
+  #name-prompt {
+    position: fixed;
+    top: 0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1500;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  #name-prompt.visible {
+    visibility: visible;
+    opacity: 1;
+  }
+  #name-prompt-content {
+    background: #1a2c43;
+    border-radius: 14px;
+    padding: 2rem 2.5rem;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 0 20px #3498dbaa;
+  }
+  #name-prompt-content h3 {
+    margin-bottom: 1rem;
+    color: #a0d8ff;
+  }
+  #name-input {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 1rem;
+    font-family: inherit;
+  }
+  #save-name-btn {
+    cursor: pointer;
+    border-radius: 8px;
+    border: none;
+    background: #3498db;
+    color: #e0f0ff;
+    padding: 0.6rem 1.4rem;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  #save-name-btn:hover,
+  #save-name-btn:focus {
+    background: #5dade2;
+    outline: none;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    #pegs {
+      gap: 1rem;
+      height: 260px;
+    }
+    .peg {
+      width: 110px;
+      height: 260px;
+    }
+    .disk {
+      height: 24px;
+      font-size: 12px;
+      line-height: 24px;
+    }
+  }
+</style>
+</head>
+<body>
+<h1>Tower of Hanoi</h1>
+<h2>Solve the puzzle by moving all disks to the last peg</h2>
+
+<div id="container">
+
+  <section id="difficulty-select">
+    <p>Select difficulty to start:</p>
+    <button data-level="easy">Easy (4 Disks)</button>
+    <button data-level="medium">Medium (6 Disks)</button>
+    <button data-level="hard">Hard (8 Disks)</button>
+  </section>
+
+  <section id="leaderboard-container">
+    <h3>Leaderboard - Best Times</h3>
+    <table aria-label="Leaderboard Table">
+      <thead>
+        <tr><th>Difficulty</th><th>Name</th><th>Time</th></tr>
+      </thead>
+      <tbody id="leaderboard-body">
+        <tr><td colspan="3" style="color:#aaa;">No records yet</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="game-area" aria-label="Tower of Hanoi game area">
+    <div id="game-info">
+      <span id="level-info">Level: </span>
+      <span id="move-count">Moves: 0</span>
+      <span id="timer">Time: 00:00</span>
+    </div>
+    <div id="pegs" role="list" aria-label="Pegs">
+      <div class="peg" data-index="0" role="listitem" tabindex="0">
+        <div class="peg-label">Peg 1</div>
+      </div>
+      <div class="peg" data-index="1" role="listitem" tabindex="0">
+        <div class="peg-label">Peg 2</div>
+      </div>
+      <div class="peg" data-index="2" role="listitem" tabindex="0">
+        <div class="peg-label">Peg 3</div>
+      </div>
+    </div>
+    <div id="controls">
+      <button id="restart-btn" aria-label="Restart game">Restart</button>
+      <button id="back-btn" aria-label="Back to difficulty selection">Back to Levels</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- Name prompt modal -->
+<div id="name-prompt" role="dialog" aria-modal="true" aria-labelledby="prompt-title">
+  <div id="name-prompt-content">
+    <h3 id="prompt-title">Congratulations! Enter your name:</h3>
+    <input id="name-input" type="text" maxlength="20" aria-label="Player Name" placeholder="Your Name" />
+    <br/>
+    <button id="save-name-btn">Save</button>
+  </div>
+</div>
+
+<script>
+  (() => {
+    // Constants for disks by difficulty
+    const DIFFICULTIES = {
+      easy: 4,
+      medium: 6,
+      hard: 8
+    };
+
+    // Color gradient for disks (blue tone)
+    function diskColor(index, total) {
+      // return a color from light blue to dark blue
+      const startHue = 210; // Blue
+      const startLight = 60;
+      const endLight = 25;
+      const lightness = startLight - (index / total) * (startLight - endLight);
+      return `hsl(${startHue}, 80%, ${lightness}%)`;
+    }
+
+    // Elements
+    const difficultySelect = document.getElementById('difficulty-select');
+    const difficultyButtons = difficultySelect.querySelectorAll('button');
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    const gameArea = document.getElementById('game-area');
+    const pegsElem = document.getElementById('pegs');
+    const levelInfo = document.getElementById('level-info');
+    const moveCountElem = document.getElementById('move-count');
+    const timerElem = document.getElementById('timer');
+    const restartBtn = document.getElementById('restart-btn');
+    const backBtn = document.getElementById('back-btn');
+
+    const namePrompt = document.getElementById('name-prompt');
+    const nameInput = document.getElementById('name-input');
+    const saveNameBtn = document.getElementById('save-name-btn');
+
+    // Game State
+    let currentLevel = null;            // 'easy'|'medium'|'hard'
+    let disksCount = 0;
+    let pegs = [[],[],[]];              // arrays of disk sizes (larger number = bigger disk)
+    let moveCount = 0;
+    let timer = null;
+    let startTime = null;
+    let draggingDisk = null;
+    let draggingFromPeg = null;
+
+    // Utils for local time display
+    function formatTime(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+      const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+      return `${minutes}:${seconds}`;
+    }
+
+    // Leaderboard storage key
+    const leaderboardStorageKey = 'tower_of_hanoi_leaderboard';
+
+    // Retrieve leaderboard from localStorage, returns obj { easy: [...], medium: [...], hard: [...] }
+    function loadLeaderboard() {
+      const saved = localStorage.getItem(leaderboardStorageKey);
+      if (!saved) {
+        return { easy: [], medium: [], hard: [] };
+      }
+      try {
+        const data = JSON.parse(saved);
+        // ensure keys exist
+        return {
+          easy: Array.isArray(data.easy) ? data.easy : [],
+          medium: Array.isArray(data.medium) ? data.medium : [],
+          hard: Array.isArray(data.hard) ? data.hard : []
+        };
+      }
+      catch(e) {
+        return { easy: [], medium: [], hard: [] };
+      }
+    }
+
+    function saveLeaderboard(data) {
+      localStorage.setItem(leaderboardStorageKey, JSON.stringify(data));
+    }
+
+    // Render leaderboard table
+    function renderLeaderboard() {
+      const leaderboard = loadLeaderboard();
+      // flatten records for all difficulties with labels and times
+      const entries = [];
+      ['easy', 'medium', 'hard'].forEach(level => {
+        leaderboard[level].forEach(record => {
+          entries.push({ level, name: record.name, time: record.time });
+        });
+      });
+      if (entries.length === 0) {
+        leaderboardBody.innerHTML = '<tr><td colspan="3" style="color:#aaa;">No records yet</td></tr>';
+        return;
+      }
+      // Sort ascending by time
+      entries.sort((a,b) => a.time - b.time);
+      // max 10 entries shown
+      const rows = entries.slice(0, 10).map(rec => {
+        return `<tr>
+          <td>${capitalize(rec.level)}</td>
+          <td>${escapeHtml(rec.name)}</td>
+          <td>${formatTime(rec.time)}</td>
+        </tr>`;
+      });
+      leaderboardBody.innerHTML = rows.join('');
+    }
+
+    function capitalize(str) {
+      if (!str) return '';
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // Escape for basic HTML injection protection in leaderboard names
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;',
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Initialize pegs state with all disks on peg 0
+    function initPegs(disks) {
+      pegs = [[], [], []];
+      for(let i = disks; i >= 1; i--) {
+        pegs[0].push(i);
+      }
+    }
+
+    // Render disks on pegs
+    function renderPegs() {
+      // Clear current peg elements except labels
+      [...pegsElem.children].forEach(pegEl => {
+        // Remove disks, keep peg label
+        [...pegEl.querySelectorAll('.disk')].forEach(diskEl => diskEl.remove());
+      });
+
+      pegs.forEach((peg, pegIdx) => {
+        const pegEl = pegsElem.children[pegIdx];
+        peg.forEach((diskSize, diskIdx) => {
+          const diskEl = document.createElement('div');
+          diskEl.classList.add('disk');
+          diskEl.textContent = diskSize;
+          // width relative to diskSize
+          // smallest width 40%, largest width 100% of peg width (minus padding)
+          const minWidthPct = 40;
+          const maxWidthPct = 98;
+          const widthPct = minWidthPct + (diskSize - 1) / (disksCount - 1) * (maxWidthPct - minWidthPct);
+          diskEl.style.width = widthPct + '%';
+          diskEl.style.backgroundColor = diskColor(diskSize - 1, disksCount);
+          diskEl.setAttribute('data-disk-size', diskSize);
+          diskEl.setAttribute('draggable', 'true');
+          diskEl.setAttribute('tabindex', '0');
+          diskEl.setAttribute('role', 'button');
+          diskEl.setAttribute('aria-grabbed', 'false');
+          diskEl.title = "Disk size " + diskSize;
+          pegEl.appendChild(diskEl);
+        });
+      });
+    }
+
+    // Start timer
+    function startTimer() {
+      startTime = Date.now();
+      timer = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        timerElem.textContent = 'Time: ' + formatTime(elapsed);
+      }, 500);
+    }
+
+    // Stop timer
+    function stopTimer() {
+      if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    // Reset game stats display
+    function resetStats() {
+      moveCount = 0;
+      moveCountElem.textContent = 'Moves: 0';
+      timerElem.textContent = 'Time: 00:00';
+    }
+
+    // Check if game is won (all disks on last peg in right order)
+    function checkWin() {
+      if (pegs[2].length === disksCount) {
+        // Check sequence is correct (descending order)
+        for(let i = 0; i < disksCount - 1; i++) {
+          if (pegs[2][i] < pegs[2][i+1]) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+
+    // Move disk between pegs (legal move enforced externally)
+    function moveDisk(fromIdx, toIdx) {
+      const fromPeg = pegs[fromIdx];
+      const toPeg = pegs[toIdx];
+      if (fromPeg.length === 0) return false;
+
+      const disk = fromPeg[fromPeg.length - 1];
+      if (toPeg.length === 0 || toPeg[toPeg.length - 1] > disk) {
+        fromPeg.pop();
+        toPeg.push(disk);
+        moveCount++;
+        moveCountElem.textContent = 'Moves: ' + moveCount;
+        renderPegs();
+        if (checkWin()) {
+          onWin();
+        }
+        return true;
+      }
+      return false;
+    }
+
+    // Keyboard move support variables
+    let keyboardSourcePeg = null;
+
+    // On win handler
+    function onWin() {
+      stopTimer();
+      // Show prompt for player name
+      namePrompt.classList.add('visible');
+      nameInput.value = '';
+      nameInput.focus();
+    }
+
+    // Save player record on leaderboard
+    function saveRecord(name) {
+      const leaderboard = loadLeaderboard();
+      const timeElapsed = Date.now() - startTime;
+      leaderboard[currentLevel].push({ name: name || 'Anonymous', time: timeElapsed });
+      // Sort ascending and keep only top 10
+      leaderboard[currentLevel].sort((a,b) => a.time - b.time);
+      if (leaderboard[currentLevel].length > 10) {
+        leaderboard[currentLevel].length = 10;
+      }
+      saveLeaderboard(leaderboard);
+      renderLeaderboard();
+    }
+
+    // Reset game and render start state
+    function newGame(level) {
+      currentLevel = level;
+      disksCount = DIFFICULTIES[level];
+      levelInfo.textContent = 'Level: ' + capitalize(level) + ` (${disksCount} disks)`;
+      initPegs(disksCount);
+      renderPegs();
+      resetStats();
+      difficultySelect.style.display = 'none';
+      leaderboardContainer.style.display = 'none';
+      gameArea.style.display = 'block';
+      keyboardSourcePeg = null;
+      startTimer();
+    }
+
+    // Show difficulty selection and leaderboard, hide game
+    function showStartScreen() {
+      difficultySelect.style.display = 'block';
+      leaderboardContainer.style.display = 'block';
+      gameArea.style.display = 'none';
+      currentLevel = null;
+      if (timer !== null) stopTimer();
+    }
+
+    // Accessing leaderboard container too
+    const leaderboardContainer = document.getElementById('leaderboard-container');
+
+    // Drag & Drop events
+    function onDiskDragStart(event) {
+      const diskEl = event.target;
+      const diskSize = parseInt(diskEl.getAttribute('data-disk-size'), 10);
+      // Only top disk on the peg is draggable
+      const pegEl = diskEl.parentElement;
+      const pegIdx = parseInt(pegEl.getAttribute('data-index'), 10);
+      const topDisk = pegs[pegIdx][pegs[pegIdx].length - 1];
+      if (topDisk !== diskSize) {
+        event.preventDefault();
+        return;
+      }
+      draggingDisk = diskEl;
+      draggingFromPeg = pegIdx;
+      diskEl.classList.add('dragging');
+      event.dataTransfer.setData('text/plain', diskSize);
+      // custom drag image invisible for cleaner UI
+      if (event.dataTransfer.setDragImage) {
+        const crt = document.createElement('canvas');
+        crt.width = 0;
+        crt.height = 0;
+        event.dataTransfer.setDragImage(crt, 0, 0);
+      }
+    }
+    function onDiskDragEnd(event) {
+      if (draggingDisk) {
+        draggingDisk.classList.remove('dragging');
+      }
+      draggingDisk = null;
+      draggingFromPeg = null;
+    }
+    function onPegDragOver(event) {
+      event.preventDefault(); // allow drop
+    }
+    function onPegDrop(event) {
+      event.preventDefault();
+      if (draggingDisk === null) return;
+      const diskSize = parseInt(event.dataTransfer.getData('text/plain'), 10);
+      const pegEl = event.currentTarget;
+      const toPegIdx = parseInt(pegEl.getAttribute('data-index'), 10);
+      if (moveDisk(draggingFromPeg, toPegIdx)) {
+        // succeeded move
+      }
+      draggingDisk.classList.remove('dragging');
+      draggingDisk = null;
+      draggingFromPeg = null;
+    }
+
+    // Keyboard navigation and moves:
+    function onDiskKeyDown(event) {
+      // Support moving top disks by keyboard:
+      const diskEl = event.target;
+      if (!diskEl.classList.contains('disk')) return;
+      const diskSize = parseInt(diskEl.getAttribute('data-disk-size'), 10);
+      const pegEl = diskEl.parentElement;
+      const pegIdx = parseInt(pegEl.getAttribute('data-index'), 10);
+      const topDisk = pegs[pegIdx][pegs[pegIdx].length - 1];
+      if (topDisk !== diskSize) return; // only top disk moves
+
+      // Space or Enter sets the "source" peg
+      // Left/right arrows move disk from source peg to adj peg
+
+      if (event.key === ' ' || event.key === 'Enter') {
+        event.preventDefault();
+        if (keyboardSourcePeg === pegIdx) {
+          // deselect if pressing again
+          keyboardSourcePeg = null;
+          highlightPegs(false);
+        } else {
+          keyboardSourcePeg = pegIdx;
+          highlightPegs(true);
+        }
+      } else if (keyboardSourcePeg !== null) {
+        let toPeg = null;
+        if (event.key === 'ArrowRight') {
+          toPeg = (keyboardSourcePeg + 1) % 3;
+        } else if (event.key === 'ArrowLeft') {
+          toPeg = (keyboardSourcePeg + 2) % 3;
+        }
+        if (toPeg !== null) {
+          event.preventDefault();
+          const moved = moveDisk(keyboardSourcePeg, toPeg);
+          if (moved) {
+            keyboardSourcePeg = null;
+            highlightPegs(false);
+          }
+        }
+      }
+    }
+
+    // Highlight pegs when keyboardSourcePeg selected
+    function highlightPegs(enabled) {
+      for (let i = 0; i < 3; i++) {
+        const pegEl = pegsElem.children[i];
+        if (enabled && i === keyboardSourcePeg) {
+          pegEl.style.outline = '3px solid #55acee';
+          pegEl.style.boxShadow = '0 0 15px #55acee';
+        } else {
+          pegEl.style.outline = '';
+          pegEl.style.boxShadow = '';
+        }
+      }
+    }
+
+    // Event Listeners Setup
+    difficultyButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        newGame(btn.getAttribute('data-level'));
+      });
+    });
+
+    restartBtn.addEventListener('click', () => {
+      if (currentLevel) {
+        newGame(currentLevel);
+      }
+    });
+
+    backBtn.addEventListener('click', () => {
+      stopTimer();
+      showStartScreen();
+    });
+
+    // Peg drag and drop events
+    [...pegsElem.children].forEach(pegEl => {
+      pegEl.addEventListener('dragover', onPegDragOver);
+      pegEl.addEventListener('drop', onPegDrop);
+      // keyboard focus trap and interaction on pegs (space to skip)
+      pegEl.addEventListener('keydown', e => {
+        // Ignore peg keydown - handled on disks
+        if(e.key===' ' || e.key==='Enter') {
+          e.preventDefault();
+        }
+      });
+    });
+
+    // Initial render and listeners for dynamic disks
+    pegsElem.addEventListener('dragstart', e => {
+      if(e.target.classList.contains('disk')) onDiskDragStart(e);
+    });
+    pegsElem.addEventListener('dragend', e => {
+      if(e.target.classList.contains('disk')) onDiskDragEnd(e);
+    });
+    pegsElem.addEventListener('keydown', e => {
+      if(e.target.classList.contains('disk')) onDiskKeyDown(e);
+    });
+
+    // Name prompt save
+    saveNameBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      saveRecord(name);
+      namePrompt.classList.remove('visible');
+      showStartScreen();
+    });
+
+    // Enter key triggers save
+    nameInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveNameBtn.click();
+      }
+    });
+
+    // On page load
+    renderLeaderboard();
+    showStartScreen();
+
+  })();
+</script>
+</body>
+</html>
+
